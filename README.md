@@ -3,7 +3,7 @@
 This project is a demo project on how to use a Murata STM32-SX1276 CMWX1ZZABZ and communicate over LoRaWAN network (TTN)
 
 The project is used as a documentation for supporting a blog post. Check this blog post to understand how to use it.
-See here : https://www.disk91.com/?p=3469 (comming soon)
+See here : https://www.disk91.com/?p=3469 
 
 ### Step 1
 Join & Uplink communication over LoRaWan TTN network
