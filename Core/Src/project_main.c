@@ -113,9 +113,13 @@ void project_setup() {
 // =====================================================================
 // What to do
 
-void send_callback(itsdk_lorawan_send_t status) {
+void send_callback(itsdk_lorawan_send_t status, uint8_t port, uint8_t size, uint8_t * rxData) {
 	gpio_reset(LED2_PORT,LED2_PIN);
 	switch ( status ) {
+	case LORAWAN_SEND_ACKED_WITH_DOWNLINK:
+		// case with downlink data
+	case LORAWAN_SEND_ACKED_WITH_DOWNLINK_PENDING:
+		// case with downlink data + pending downlink on server side.
 	case LORAWAN_SEND_ACKED:
 		gpio_set(LED3_PORT,LED3_PIN);
 		break;
@@ -140,7 +144,7 @@ void task() {
 		gpio_set(LED2_PORT,LED2_PIN);
 		gpio_reset(LED3_PORT,LED3_PIN);
 		gpio_reset(LED4_PORT,LED4_PIN);
-		itsdk_lorawan_send_async(
+		itsdk_lorawan_send_t r = itsdk_lorawan_send_async(
 				t,
 				16,
 				1,
@@ -149,6 +153,9 @@ void task() {
 				ITSDK_LORAWAN_CNF_RETRY,
 				send_callback
 		);
+		if ( r != LORAWAN_SEND_RUNNING ) {
+			log_warn("an error has bene reported : %d\r\n",r);
+		}
 	}
 	log_info("time is %d\r\n",(uint32_t)itsdk_time_get_ms());
 
