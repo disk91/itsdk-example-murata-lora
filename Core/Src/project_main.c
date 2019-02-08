@@ -35,6 +35,8 @@
 #include <it_sdk/eeprom/eeprom.h>
 
 #include <it_sdk/lorawan/lorawan.h>
+#include <it_sdk/encrypt/encrypt.h>
+
 
 #define LED1_PORT __BANK_B
 #define LED1_PIN __LP_GPIO_5
@@ -151,7 +153,8 @@ void task() {
 				__LORAWAN_DR_5,
 				LORAWAN_SEND_CONFIRMED,
 				ITSDK_LORAWAN_CNF_RETRY,
-				send_callback
+				send_callback,
+				/*PAYLOAD_ENCRYPT_AESCTR | PAYLOAD_ENCRYPT_SPECK |*/ PAYLOAD_ENCRYPT_NONE
 		);
 		if ( r != LORAWAN_SEND_RUNNING ) {
 			log_warn("an error has bene reported : %d\r\n",r);

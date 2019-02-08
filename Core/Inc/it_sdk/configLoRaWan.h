@@ -153,6 +153,35 @@
 								}									\
 							  }												// TTN EU Configuration
 
+																		   // =============================
+																		   // ITSDK E2E ENCRYPTION STATIC CONFIG
+																		   // =============================
+
+#define ITSDK_LORAWAN_ENCRYPTION		(  __PAYLOAD_ENCRYPT_NONE /*|*/  \
+										  /*  __PAYLOAD_ENCRYPT_AESCTR*/ \
+									      /*| __PAYLOAD_ENCRYPT_SPECK */ \
+									    )									// Encryption code activated
+#define ITSDK_LORAWAN_AES_SHAREDKEY	( 0xAE632397 ^ ITSDK_PROTECT_KEY )      // CHANGE ME
+																			// Shared Key for CTR generation
+#define ITSDK_LORAWAN_AES_INITALNONCE ( 0x25 )								// CHANGE ME
+																			// Initial value for Nonce used for AES128-CRT
+#define ITSDK_LORAWAN_SPECKKEY		(   (uint64_t)0xEF583AB7A57834BC  \
+									  ^ (  (uint64_t)ITSDK_PROTECT_KEY \
+									     | ((uint64_t)ITSDK_PROTECT_KEY << 32)) \
+									)										// CHANGE ME
+																			// Shared Key for SPECK32/64 Encryption
+#define ITSDK_LORAWAN_AES_MASTERKEYH (   (uint64_t)0x2B7E151628AED2A6  \
+									  ^ (  (uint64_t)ITSDK_PROTECT_KEY \
+									     | ((uint64_t)ITSDK_PROTECT_KEY << 32)) \
+									 )										// CHANGE ME
+																			// Static 16B key used as master key (8B HIGH)
+																			// for end to end encryption
+#define ITSDK_LORAWAN_AES_MASTERKEYL (   (uint64_t)0xABF7158809CF4F3C  \
+									  ^ (  (uint64_t)ITSDK_PROTECT_KEY \
+									     | ((uint64_t)ITSDK_PROTECT_KEY << 32)) \
+									 )										// CHANGE ME
+																		    // Static 16B key used as master key (8B LOW)
+																		    // for end to end encryption
 
 #endif
 // +-------------SX1276------------|--------------------------------------|---------------------------------------|
