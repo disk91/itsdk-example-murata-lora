@@ -15,7 +15,7 @@ The project have different tag for the different step of realization.
 
 1. Clone this repository and open it with AC6 environment [See here on how to install it](https://www.disk91.com/2018/technology/hardware/getting-started-with-nucleo32-stm32l031/)
 
-2. Clone the [Disk91 STM32 IoT SDK repository](https://github.com/disk91/stm32-it-sdk) in the Project root directory to add the needed sdk dependencies. This project has been tested & refied with SDK [Version 1.3.1](https://github.com/disk91/stm32-it-sdk/releases/tag/v1.3.1-FW1.11.0) 
+2. Clone the [Disk91 STM32 IoT SDK repository](https://github.com/disk91/stm32-it-sdk) in the Project root directory to add the needed sdk dependencies. This project has been tested & refied with SDK [Version 1.4.1](https://github.com/disk91/stm32-it-sdk/releases/tag/v1.4.1-FW1.11.0) 
 
 # CubeMx configuration
 

@@ -36,6 +36,8 @@
 
 #include <it_sdk/lorawan/lorawan.h>
 #include <it_sdk/encrypt/encrypt.h>
+#include <it_sdk/eeprom/securestore.h>
+#include <it_sdk/lowpower/lowpower.h>
 
 
 #define LED1_PORT __BANK_B
@@ -46,7 +48,8 @@
 #define LED3_PIN __LP_GPIO_6
 #define LED4_PORT __BANK_B
 #define LED4_PIN __LP_GPIO_7
-
+#define BUTTON_PORT	__BANK_B
+#define BUTTON_PIN __LP_GPIO_2
 
 // =====================================================================
 // Manage the device configuration (eeprom)
@@ -90,7 +93,7 @@ void project_setup() {
 	log_info("Booting \r\n");
 	// reboot cause
 	log_info("Reset : %d\r\n",itsdk_getResetCause());
-	itsdk_cleanResetCause();
+	//itsdk_cleanResetCause();
 
 	// Init at boot time
 	loadConfig();
@@ -99,6 +102,8 @@ void project_setup() {
 	gpio_reset(LED3_PORT, LED3_PIN);
 	gpio_reset(LED4_PORT, LED4_PIN);
 
+	uint8_t consolePass[16];
+	itsdk_secstore_readBlock(ITSDK_SS_CONSOLEKEY, consolePass);
 
 
 	// Init LoRaWan stack
@@ -171,5 +176,11 @@ void task() {
  */
 void project_loop() {
 	itsdk_lorawan_loop();
+	if( gpio_read(BUTTON_PORT, BUTTON_PIN) == 0 ) {
+		lowPower_disable();
+		log_info("LowPowerOff\r\n");
+		itsdk_delayMs(200);
+	}
+
 }
 

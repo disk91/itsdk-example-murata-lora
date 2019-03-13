@@ -44,6 +44,7 @@
 #if ITSDK_WITH_LORAWAN_LIB == __ENABLE
 
 #define ITSDK_LORAWAN_STACK			__LORAWAN_SEMTECH					   // Select the SEMTECH lorawan stack
+#define ITSDK_LORAWAN_ACTTYPE		__LORAWAN_ACTIVATION_STATIC			   // Activation type selected at compilation time
 #define ITSDK_LORAWAN_ACTIVATION	__LORAWAN_OTAA						   // Activation OTAA or ABP
 #define ITSDK_LORAWAN_NETWORKTYPE   __LORAWAN_NWK_PUBLIC				   // type of network - public / private
 #define ITSDK_LORAWAN_DEVEUI_SRC	__LORAWAN_DEVEUI_STATIC				   // Device EUI is static / generated
@@ -77,19 +78,19 @@
 																		   // =============================
 
 #define ITSDK_LORAWAN_DEVEUI		{													\
-										0x00, 0x00, 0x00, 0xBA, 0x56, 0x99, 0x3B, 0x73	\
+										0x00, 0xF8, 0x6A, 0xBA, 0x56, 0x99, 0x3B, 0x73	\
 									}									   // Static DEVEUI (big endian)
 																		   // Bytes are in the same order as
 																		   // in a String.
 
 #define ITSDK_LORAWAN_APPEUI		{													\
-										0x70, 0x00, 0x00, 0x7E, 0xF0, 0x00, 0x3B, 0x19	\
+										0x70, 0xB3, 0xD5, 0x7E, 0xF0, 0x00, 0x3B, 0x19	\
 									}									   // Static APPEUI (big endian)
 																		   // Bytes are in the same order as
 																		   // in a String.
 
 #define ITSDK_LORAWAN_APPKEY		{													\
-										0x00, 0x00, 0x00, 0x00, 0x87, 0xC9, 0x2F, 0x47, \
+										0x56, 0xFF, 0x70, 0x64, 0x87, 0xC9, 0x2F, 0x47, \
 										0x17, 0xEE, 0xF7, 0x06, 0xAC, 0x09, 0x5D, 0xD8  \
 									}									   // Static APPKEY (byte[])
 																		   // Bytes are in the same order compared
@@ -97,7 +98,7 @@
 
 
 #define ITSDK_LORAWAN_NWKKEY		{													\
-										0x00, 0x00, 0x00, 0x00, 0x87, 0xC9, 0x2F, 0x47, \
+										0x56, 0xFF, 0x70, 0x64, 0x87, 0xC9, 0x2F, 0x47, \
 										0x17, 0xEE, 0xF7, 0x06, 0xAC, 0x09, 0x5D, 0xD8  \
 									}									   // Static NETWORK KEY (byte[])
 																		   // Bytes are in the same order compared
@@ -158,8 +159,8 @@
 																		   // =============================
 
 #define ITSDK_LORAWAN_ENCRYPTION		(  __PAYLOAD_ENCRYPT_NONE /*|*/  \
-										  /*  __PAYLOAD_ENCRYPT_AESCTR*/ \
-									      /*| __PAYLOAD_ENCRYPT_SPECK */ \
+										  /*  __PAYLOAD_ENCRYPT_AESCTR */\
+									      /* | __PAYLOAD_ENCRYPT_SPECK  */\
 									    )									// Encryption code activated
 #define ITSDK_LORAWAN_AES_SHAREDKEY	( 0xAE632397 ^ ITSDK_PROTECT_KEY )      // CHANGE ME
 																			// Shared Key for CTR generation
