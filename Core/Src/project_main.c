@@ -33,140 +33,136 @@
 #include <it_sdk/sched/scheduler.h>
 #include <it_sdk/statemachine/statemachine.h>
 #include <it_sdk/eeprom/eeprom.h>
+#include <it_sdk/eeprom/sdk_config.h>
 
 #include <it_sdk/lorawan/lorawan.h>
 #include <it_sdk/encrypt/encrypt.h>
 #include <it_sdk/eeprom/securestore.h>
 #include <it_sdk/lowpower/lowpower.h>
+#include <drivers/sx1276/sx1276.h>
 
 
-#define LED1_PORT __BANK_B
-#define LED1_PIN __LP_GPIO_5
-#define LED2_PORT __BANK_A
-#define LED2_PIN __LP_GPIO_5
-#define LED3_PORT __BANK_B
-#define LED3_PIN __LP_GPIO_6
-#define LED4_PORT __BANK_B
-#define LED4_PIN __LP_GPIO_7
-#define BUTTON_PORT	__BANK_B
-#define BUTTON_PIN __LP_GPIO_2
-
-// =====================================================================
-// Manage the device configuration (eeprom)
-
-#define VERSION 0x01
-struct conf {
-		uint8_t			version;
-} s_conf;
-
-void loadConfig() {
-
-	uint8_t v;
-	if ( ! eeprom_read(&s_conf, sizeof(s_conf), VERSION,&v) ) {
-		log_info("Flash the initial configuration\r\n");
-		s_conf.version = VERSION;
-		eeprom_write(&s_conf, sizeof(s_conf), VERSION);
-	} else {
-		log_info("Loaded version %d\r\n",v);
-	}
-}
-
-// =====================================================================
-// Manage the device state (ram)
+#define COMFREQS	(1*60*1000)
+#define TASKDELAYMS	(1000)
 
 struct state {
-	uint8_t 	led;
-	uint32_t  	loops;
+	uint8_t 		led;
+	uint32_t  		loops;
+	int32_t			lastComMS;
+	itsdk_bool_e	setup;
 } s_state;
 
-void initState() {
-	s_state.led = GPIO_PIN_SET;
-	s_state.loops = 0;
+
+#define LED1_PORT 	__BANK_B
+#define LED1_PIN 	__LP_GPIO_5
+#define LED2_PORT 	__BANK_A
+#define LED2_PIN 	__LP_GPIO_5
+#define LED3_PORT 	__BANK_B
+#define LED3_PIN 	__LP_GPIO_6
+#define LED4_PORT 	__BANK_B
+#define LED4_PIN 	__LP_GPIO_7
+#define BUTTON_PORT	__BANK_B
+#define BUTTON_PIN 	__LP_GPIO_2
+
+
+
+void task() {
+
+	// Just to get something provinf the activity
+	uint8_t t[4] = { '/','|','\\','-'};
+	log_info("\r%c ",t[s_state.loops & 3]);
+	s_state.led = (s_state.led==__GPIO_VAL_SET)?__GPIO_VAL_RESET:__GPIO_VAL_SET;
+	gpio_change(LED1_PORT, LED1_PIN,s_state.led);
+	s_state.loops++;
+
+	// wait for the board configuration
+	uint8_t i = 0;
+	uint8_t devEui[8] = {0};
+	itsdk_lorawan_getDeviceEUI(devEui);
+	while ( i < 8 && devEui[i] == 0 ) i++;
+	if  ( i < 8 ) {
+		if ( s_state.setup == BOOL_FALSE) {
+			log_info("Init LoRawan Stack ");
+			itsdk_lorawan_init_t r;
+			#ifdef ITSDK_LORAWAN_CHANNEL
+				static itsdk_lorawan_channelInit_t channels= ITSDK_LORAWAN_CHANNEL;
+				r = itsdk_lorawan_setup(itsdk_config.sdk.activeRegion,&channels);
+			#else
+				r = itsdk_lorawan_setup(itsdk_config.sdk.activeRegion,NULL);
+			#endif
+			if ( r == LORAWAN_INIT_SUCESS ) {
+				log_info("success\r\n");
+				s_state.setup = BOOL_TRUE;
+			} else {
+				log_info("failed\r\n");
+			}
+		}
+		if ( s_state.setup == BOOL_TRUE && s_state.lastComMS > COMFREQS) {
+			// Send a LoRaWan Frame
+			uint8_t t[20] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+			if ( !itsdk_lorawan_hasjoined() ) {
+				log_info("Connecting LoRaWAN ");
+				if ( itsdk_lorawan_join_sync() == LORAWAN_JOIN_SUCCESS ) {
+					gpio_set(LED4_PORT,LED4_PIN);
+					log_info("success\r\n");
+				} else {
+					gpio_reset(LED4_PORT,LED4_PIN);
+					log_info("failed\r\n");
+					s_state.lastComMS = COMFREQS - 30*1000; // retry in 30 seconds
+				}
+			} else {
+				log_info("Fire a LoRaWAN message ");
+				uint8_t port;
+				uint8_t size=16;
+				uint8_t rx[16];
+				itsdk_lorawan_send_t r = itsdk_lorawan_send_sync(
+						t,						// Payload
+						16,						// Payload size
+						1,						// Port
+						__LORAWAN_DR_5,			// Speed
+						LORAWAN_SEND_CONFIRMED,	// With a ack
+						ITSDK_LORAWAN_CNF_RETRY,// And default retry
+						&port,					// In case of reception - Port (uint8_t)
+						&size,					// In case of reception - Size (uint8_t) - init with buffer max size
+						rx,						// In case of recpetion - Data (uint8_t[] bcopied)
+						PAYLOAD_ENCRYPT_NONE	// End to End encryption mode
+				);
+				if ( r == LORAWAN_SEND_SENT || r == LORAWAN_SEND_ACKED ) {
+					log_info("success\r\n",r);
+				} else {
+					log_info("failed (%d)\r\n",r);
+				}
+				s_state.lastComMS = 0;
+			}
+		} else {
+			s_state.lastComMS += TASKDELAYMS;
+		}
+	}
+
 }
+
 
 // =====================================================================
 // Setup
-void task();
 
 void project_setup() {
-	log_init(ITSDK_LOGGER_CONF);
-	log_info("Booting \r\n");
-	// reboot cause
-	log_info("Reset : %d\r\n",itsdk_getResetCause());
-	//itsdk_cleanResetCause();
 
-	// Init at boot time
-	loadConfig();
-	initState();
-	gpio_reset(LED1_PORT, LED1_PIN);
-	gpio_reset(LED3_PORT, LED3_PIN);
-	gpio_reset(LED4_PORT, LED4_PIN);
+//	SX1276InitLowPower();
+	log_info("Starting up\r\n");				// print a message on the USART2
+	itsdk_delayMs(2000);
 
-	uint8_t consolePass[16];
-	itsdk_secstore_readBlock(ITSDK_SS_CONSOLEKEY, consolePass);
+	//itsdk_config_resetToFactory();
 
+	s_state.led = __GPIO_VAL_RESET;
+	s_state.loops = 0;
+	s_state.lastComMS = COMFREQS;
+	s_state.setup = BOOL_FALSE;
+	gpio_change(LED1_PORT, LED1_PIN,s_state.led);
+	gpio_reset(LED4_PORT,LED4_PIN);
 
-	// Init LoRaWan stack
-	static itsdk_lorawan_channelInit_t channels= ITSDK_LORAWAN_CHANNEL;
-	#ifdef ITSDK_LORAWAN_CHANNEL
-		itsdk_lorawan_setup(__LORAWAN_REGION_EU868,&channels);
-	#else
-		itsdk_lorawan_setup(__LORAWAN_REGION_EU868,NULL);
-	#endif
+	itdt_sched_registerSched(TASKDELAYMS,ITSDK_SCHED_CONF_IMMEDIATE, &task);
 
-	itdt_sched_registerSched(30000,ITSDK_SCHED_CONF_IMMEDIATE, &task);
-}
-
-// =====================================================================
-// What to do
-
-void send_callback(itsdk_lorawan_send_t status, uint8_t port, uint8_t size, uint8_t * rxData) {
-	gpio_reset(LED2_PORT,LED2_PIN);
-	switch ( status ) {
-	case LORAWAN_SEND_ACKED_WITH_DOWNLINK:
-		// case with downlink data
-	case LORAWAN_SEND_ACKED_WITH_DOWNLINK_PENDING:
-		// case with downlink data + pending downlink on server side.
-	case LORAWAN_SEND_ACKED:
-		gpio_set(LED3_PORT,LED3_PIN);
-		break;
-	case LORAWAN_SEND_SENT:
-		gpio_set(LED4_PORT,LED4_PIN);
-		break;
-	default:
-		break;
-	}
-}
-
-void task() {
-	uint8_t t[20] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
-
-	if ( !itsdk_lorawan_hasjoined() ) {
-		if ( itsdk_lorawan_join_sync() == LORAWAN_JOIN_SUCCESS ) {
-			gpio_set(LED1_PORT,LED1_PIN);
-		} else {
-			gpio_reset(LED1_PORT,LED1_PIN);
-		}
-	} else {
-		gpio_set(LED2_PORT,LED2_PIN);
-		gpio_reset(LED3_PORT,LED3_PIN);
-		gpio_reset(LED4_PORT,LED4_PIN);
-		itsdk_lorawan_send_t r = itsdk_lorawan_send_async(
-				t,
-				16,
-				1,
-				__LORAWAN_DR_5,
-				LORAWAN_SEND_CONFIRMED,
-				ITSDK_LORAWAN_CNF_RETRY,
-				send_callback,
-				/*PAYLOAD_ENCRYPT_AESCTR | PAYLOAD_ENCRYPT_SPECK |*/ PAYLOAD_ENCRYPT_NONE
-		);
-		if ( r != LORAWAN_SEND_RUNNING ) {
-			log_warn("an error has bene reported : %d\r\n",r);
-		}
-	}
-	log_info("time is %d\r\n",(uint32_t)itsdk_time_get_ms());
-
+	//lowPower_disable();
 }
 
 
@@ -175,12 +171,6 @@ void task() {
  * Keep in this loop only really short operations
  */
 void project_loop() {
-	itsdk_lorawan_loop();
-	if( gpio_read(BUTTON_PORT, BUTTON_PIN) == 0 ) {
-		lowPower_disable();
-		log_info("LowPowerOff\r\n");
-		itsdk_delayMs(200);
-	}
-
+    itsdk_lorawan_loop();
 }
 

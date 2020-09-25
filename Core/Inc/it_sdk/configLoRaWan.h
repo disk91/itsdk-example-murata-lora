@@ -51,6 +51,10 @@
 #define ITSDK_LORAWAN_ADR			__LORAWAN_ADR_OFF					   // Adaptative Data Rate
 #define ITSDK_LORAWAN_DEFAULT_DR	__LORAWAN_DR_0						   // Default data rate (SF12 125KHz)
 #define ITSDK_LORAWAN_CNF_RETRY		3									   // Number of retry when Confirm mode is applied
+#ifndef ITSDK_MURATA_TCXO_WARMUP
+#define ITSDK_MURATA_TCXO_WARMUP	50									   // Warmup time for TCXO
+#define ITSDK_MURATA_WAKEUP_TIME    53 									   // WakeUp time correction for RX window start at least TCXO Time [ms]
+#endif
 #define ITSDK_LORAWAN_MAX_RX_ERROR	0									   // Extends the RX windows with +/- MS
 																		   // This is for unprecised clocks (0=default value)
 #define ITSDK_LORAWAN_MAX_DWNLNKSZ	32									   // Max downlink Size in Byte for reception buffer
@@ -78,28 +82,28 @@
 																		   // =============================
 
 #define ITSDK_LORAWAN_DEVEUI		{													\
-										0x00, 0x00, 0x00, 0xBA, 0x56, 0x99, 0x3B, 0x73	\
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	\
 									}									   // Static DEVEUI (big endian)
 																		   // Bytes are in the same order as
 																		   // in a String.
 
 #define ITSDK_LORAWAN_APPEUI		{													\
-										0x70, 0x00, 0x00, 0x7E, 0xF0, 0x00, 0x3B, 0x19	\
+										0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	\
 									}									   // Static APPEUI (big endian)
 																		   // Bytes are in the same order as
 																		   // in a String.
 
 #define ITSDK_LORAWAN_APPKEY		{													\
-										0x00, 0x00, 0x00, 0x00, 0x87, 0xC9, 0x2F, 0x47, \
-										0x17, 0xEE, 0xF7, 0x06, 0xAC, 0x09, 0x5D, 0xD8  \
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  \
 									}									   // Static APPKEY (byte[])
 																		   // Bytes are in the same order compared
 																		   // as in a String.
 
 
 #define ITSDK_LORAWAN_NWKKEY		{													\
-										0x00, 0x00, 0x00, 0x00, 0x87, 0xC9, 0x2F, 0x47, \
-										0x17, 0xEE, 0xF7, 0x06, 0xAC, 0x09, 0x5D, 0xD8  \
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  \
 									}									   // Static NETWORK KEY (byte[])
 																		   // Bytes are in the same order compared
 																		   // as in a String.
@@ -153,6 +157,21 @@
 								}									\
 							  }												// TTN EU Configuration
 
+#define UNDEF__ITSDK_LORAWAN_CHANNEL {										\
+								8,		/*num of channel*/			\
+								{									\
+									{	0, 903900000, 903900000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	1, 904100000, 904100000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	2, 904300000, 904300000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	3, 904500000, 904500000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	4, 904700000, 904700000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	5, 904900000, 904900000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	6, 905100000, 905100000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }, \
+									{	7, 905300000, 905300000, __LORAWAN_DR_0, __LORAWAN_DR_3, 0 }  \
+								}									\
+							  }												// TTN US915 Configuration
+
+
 																		   // =============================
 																		   // ITSDK E2E ENCRYPTION STATIC CONFIG
 																		   // =============================
@@ -161,31 +180,11 @@
 										  /*  __PAYLOAD_ENCRYPT_AESCTR */\
 									      /* | __PAYLOAD_ENCRYPT_SPECK  */\
 									    )									// Encryption code activated
-#define ITSDK_LORAWAN_AES_SHAREDKEY	( 0xAE632397 ^ ITSDK_PROTECT_KEY )      // CHANGE ME
-																			// Shared Key for CTR generation
-#define ITSDK_LORAWAN_AES_INITALNONCE ( 0x25 )								// CHANGE ME
-																			// Initial value for Nonce used for AES128-CRT
-#define ITSDK_LORAWAN_SPECKKEY		(   (uint64_t)0xEF583AB7A57834BC  \
-									  ^ (  (uint64_t)ITSDK_PROTECT_KEY \
-									     | ((uint64_t)ITSDK_PROTECT_KEY << 32)) \
-									)										// CHANGE ME
-																			// Shared Key for SPECK32/64 Encryption
-#define ITSDK_LORAWAN_AES_MASTERKEYH (   (uint64_t)0x2B7E151628AED2A6  \
-									  ^ (  (uint64_t)ITSDK_PROTECT_KEY \
-									     | ((uint64_t)ITSDK_PROTECT_KEY << 32)) \
-									 )										// CHANGE ME
-																			// Static 16B key used as master key (8B HIGH)
-																			// for end to end encryption
-#define ITSDK_LORAWAN_AES_MASTERKEYL (   (uint64_t)0xABF7158809CF4F3C  \
-									  ^ (  (uint64_t)ITSDK_PROTECT_KEY \
-									     | ((uint64_t)ITSDK_PROTECT_KEY << 32)) \
-									 )										// CHANGE ME
-																		    // Static 16B key used as master key (8B LOW)
-																		    // for end to end encryption
 
 #endif
 // +-------------SX1276------------|--------------------------------------|---------------------------------------|
 #if ITSDK_LORAWAN_LIB == __LORAWAN_SX1276
+#ifndef ITSDK_SX1276_SPI												   // if not yet defined in configSigfox
 #define ITSDK_SX1276_SPI			hspi1								   // SPI To BE USED
 																		   // SPI Configured by CubeMX
 																		   //  Master, 8b, Polarity Low,
@@ -217,12 +216,13 @@
 // +-------------MURATA------------|--------------------------------------|---------------------------------------|
 
 #define ITSDK_MURATA_ANTSW_RX_BANK 	     __BANK_A						   // MURATE ANTENNA SWITCH RX
-#define ITSDK_MURATE_ANTSW_RX_PIN	     __LP_GPIO_1
+#define ITSDK_MURATA_ANTSW_RX_PIN	     __LP_GPIO_1
 #define ITSDK_MURATA_ANTSW_TXBOOST_BANK  __BANK_C						   // MURATA TX POWER BOOST
-#define ITSDK_MURATE_ANTSW_TXBOOST_PIN	 __LP_GPIO_1
+#define ITSDK_MURATA_ANTSW_TXBOOST_PIN	 __LP_GPIO_1
 #define ITSDK_MURATA_ANTSW_TXRFO_BANK    __BANK_C						   // MURATA TX RFO
-#define ITSDK_MURATE_ANTSW_TXRFO_PIN	 __LP_GPIO_2
+#define ITSDK_MURATA_ANTSW_TXRFO_PIN	 __LP_GPIO_2
 
+#endif
 
 #endif //__LORAWAN_SX1276
 
