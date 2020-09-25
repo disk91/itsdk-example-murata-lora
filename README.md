@@ -107,11 +107,11 @@ To obtain LoRaWan credentials, you can take a look at TheThingsNetwork (TTN).
 	
 These credentials can be use for your tests but you won't be able to register them as the PAC is invalid.
 Now you can type in the console to setup your device (if you copy/paste, you need to add a delay >= 300ms between each char)
-	* Configure radio for Europe: _SC:R:0020_  or for USA _SC:R:0100_
-	* Save the configuration: type _S_
-	* Configure APP EUI: _SS:A:70B3D57EF0003B19_
-	* Configure APP KEY: _SS:B:56FF706487C92F4717EEF706AC000000_
-	* Configure Device EUI: _SS:9:00F86ABA56993000_
+- Configure radio for Europe: _SC:R:0020_  or for USA _SC:R:0100_
+- Save the configuration: type _S_
+- Configure APP EUI: _SS:A:70B3D57EF0003B19_
+- Configure APP KEY: _SS:B:56FF706487C92F4717EEF706AC000000_
+- Configure Device EUI: _SS:9:00F86ABA56993000_
 	
 
 After setting up the Device EUI you should get:
